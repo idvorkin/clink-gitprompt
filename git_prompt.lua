@@ -43,10 +43,18 @@ function file_contents(name)
 end
 
 function gitdir()
-    local file = io.popen("git rev-parse --git-dir 2>nul")
-    local output = file:read('*all')
-    local rc = {file:close()}
-    return trim(output)
+    -- This gets called regardless of if you're in a git directory, so it needs to be fast.
+    -- Calling into git is slow, so instead just check for a directory called .git, as we walk up the tree.
+
+    local maxTreeDepth=10 -- try up to 10 ..\, probably a better way to do this.
+    local possibleGitDir = ".git"
+    for i=0, 10 do
+        if directory_exists(possibleGitDir) then
+            return gitDir
+        end 
+        possibleGitDir = "../"..possibleGitDir
+    end
+    return false
 end
 
 function ingitdir()
